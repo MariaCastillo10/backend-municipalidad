@@ -23,10 +23,9 @@ const transporter = nodemailer.createTransport({
 
 const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
-// cron.schedule("0 9 * * *", async () => {
+cron.schedule("0 9 * * *", async () => {
   // cron.schedule("* * * * *", async () => {
   // QUE SE ENVIE CADA MINUTO
-  cron.schedule("*/5 * * * *", async () => {
   console.log("🔁 Ejecutando tarea programada de recordatorios de firma");
 
   const client = new MongoClient(MONGO_URI);
@@ -46,7 +45,7 @@ const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
         (hoy - fechaCreacion) / (1000 * 60 * 60 * 24)
       );
 
-      // if (diasPasados < 5) {
+      if (diasPasados < 5) {
         const correos = [
           solicitud.correoSolicitante,
           solicitud.correoConyuge,
@@ -60,9 +59,9 @@ const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
           });
           console.log(`✉️ Correo enviado a: ${correo}`);
         }
-      // }
+      }
 
-      // if (diasPasados >= 5) {
+      if (diasPasados >= 5) {
         // if (true) {
         const celulares = [
           solicitud.celularSolicitante,
@@ -76,7 +75,7 @@ const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
           });
           console.log(`📱 WhatsApp enviado a: +51${celular}`);
         }
-      // }
+      }
     }
   } catch (err) {
     console.error("❌ Error en cron job:", err);
