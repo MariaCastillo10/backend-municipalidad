@@ -8,7 +8,7 @@ const sgMail = require("@sendgrid/mail");
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 exports.register = async (req, res) => {
-  const { nombres, email, telefono, password } = req.body;
+  const { nombres, email, telefono, password, esAdmin } = req.body;
 
   if (!nombres || !email || !telefono || !password) {
     return res.status(400).json({ error: "Todos los campos son obligatorios" });
@@ -27,6 +27,7 @@ exports.register = async (req, res) => {
       email,
       telefono,
       password,
+      esAdmin,
     });
 
     await newUser.save();
@@ -57,7 +58,6 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: "Contraseña incorrecta" });
     }
 
-    // Si quieres usar JWT, puedes dejarlo así, pero solo con id y email
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -70,6 +70,7 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        esAdmin: user.esAdmin,
       },
     });
   } catch (error) {

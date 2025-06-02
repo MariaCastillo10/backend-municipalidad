@@ -6,7 +6,7 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "API Educativa POO",
+      title: "API Municipalidad El Porvenir",
       version: "1.0.0",
       description:
         "Documentación de la API para la aplicación educativa de POO con IA",
@@ -89,7 +89,7 @@ const options = {
             expected_output: {
               type: "string",
               example: "Salida esperada del ejercicio.",
-            }
+            },
           },
         },
         Solution: {

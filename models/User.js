@@ -44,10 +44,11 @@ const bcrypt = require("bcrypt");
  */
 
 const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true }, 
+  name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, trim: true },
   telefono: { type: String, required: true, trim: true },
-  password: { type: String, required: true }
+  password: { type: String, required: true },
+  esAdmin: { type: Boolean },
 });
 
 // Middleware para encriptar la contraseña antes de guardar
@@ -67,6 +68,3 @@ UserSchema.methods.comparePassword = function (candidatePassword) {
 };
 
 module.exports = mongoose.model("users", UserSchema);
-
-
-

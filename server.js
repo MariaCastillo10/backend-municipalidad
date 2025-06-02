@@ -1,23 +1,18 @@
-// backend/server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const swaggerUi = require("swagger-ui-express");
-const swaggerSpec = require("./config/swaggerConfig"); // Importar la configuración de Swagger
+const swaggerSpec = require("./config/swaggerConfig");
 
-// Cargar las variables de entorno
 dotenv.config();
 
-// Crear la aplicación de Express
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Conectar a MongoDB
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
@@ -27,25 +22,24 @@ mongoose
   .then(() => console.log("Conectado a MongoDB"))
   .catch((err) => {
     console.error("Error de conexión:", err);
-    process.exit(1); // Salir del proceso si no se puede conectar a la base de datos
+    process.exit(1);
   });
 
-// Rutas de la API
 const authRoutes = require("./routes/authRoutes");
 const exerciseRoutes = require("./routes/exerciseRoutes");
+const solicitudRoutes = require("./routes/solicitudRoutes");
 
-// Definir las rutas
 app.use("/api/auth", authRoutes);
 app.use("/api/exercises", exerciseRoutes);
+app.use("/api/solicitud", solicitudRoutes);
 
-// Ruta principal para probar el servidor
 app.get("/", (req, res) => {
-  res.send("API Educativa POO con IA");
+  res.send("API Municipalidad el Porvenir");
 });
-// Ruta para la documentación de Swagger
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Iniciar el servidor
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+require("./job/recordatorioFirma");
+
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
   console.log(
