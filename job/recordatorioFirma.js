@@ -25,7 +25,6 @@ const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
 cron.schedule("0 9 * * *", async () => {
   // cron.schedule("* * * * *", async () => {
-  // QUE SE ENVIE CADA MINUTO
   console.log("🔁 Ejecutando tarea programada de recordatorios de firma");
 
   const client = new MongoClient(MONGO_URI);
