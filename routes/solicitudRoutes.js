@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const solicitudController = require("../controllers/solicitudController");
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
 
 /**
  * @swagger
@@ -152,5 +154,51 @@ router.get("/", solicitudController.listarSolicitudes);
  */
 
 router.put("/:id/estado", solicitudController.actualizarEstado);
+
+router.put("/:id", solicitudController.actualizarSolicitud);
+
+/**
+ * @swagger
+ * /solicitud/extraer-recibo:
+ *   post:
+ *     summary: Extrae texto de una imagen de recibo y devuelve los datos detectados
+ *     tags: [Solicitudes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               recibo:
+ *                 type: string
+ *                 format: binary
+ *                 description: Imagen del recibo de pago
+ *     responses:
+ *       200:
+ *         description: Texto extraído correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 texto:
+ *                   type: string
+ *                 monto:
+ *                   type: string
+ *                 fecha:
+ *                   type: string
+ *                 codigo:
+ *                   type: string
+ *       400:
+ *         description: Error en los datos enviados
+ *       500:
+ *         description: Error en el servidor
+ */
+router.post(
+  "/extraer-recibo",
+  upload.single("recibo"),
+  solicitudController.extraerTextoRecibo
+);
 
 module.exports = router;

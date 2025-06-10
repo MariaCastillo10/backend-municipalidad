@@ -16,12 +16,11 @@ const SolicitudSchema = new mongoose.Schema(
     municipalidad: { type: Number, required: true },
     distrito: { type: Number, required: true },
     estado: { type: Number, required: true },
-    archivoAdjunto: {
-      filename: String,
-      path: String,
-      mimetype: String,
-      size: Number,
-    },
+    codigoPago: { type: String, required: false },
+    fechaPago: { type: String, required: false },
+    montoPago: { type: String, required: false },
+    nombrePago: { type: String, required: false },
+    nroOperacionPago: { type: String, required: false },
   },
   {
     timestamps: true,
