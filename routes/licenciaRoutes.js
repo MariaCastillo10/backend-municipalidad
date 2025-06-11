@@ -166,4 +166,27 @@ router.put("/:id/estado", licenciaController.actualizarEstado);
  */
 router.put("/:id", licenciaController.editarLicencia);
 
+/**
+ * @swagger
+ * /api/licencias/{id}/pdf:
+ *   get:
+ *     summary: Descargar el PDF de una licencia
+ *     tags: [Licencias]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la licencia
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: PDF descargado correctamente
+ *       404:
+ *         description: Licencia no encontrada
+ *       500:
+ *         description: Error al descargar el PDF
+ */
+router.get("/:id/pdf", licenciaController.descargarPDF);
+
 module.exports = router;
