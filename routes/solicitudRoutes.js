@@ -11,6 +11,8 @@ const upload = multer({ dest: "uploads/" });
  *   description: Endpoints para solicitudes de trámite
  */
 
+
+
 /**
  * @swagger
  * /solicitud:
