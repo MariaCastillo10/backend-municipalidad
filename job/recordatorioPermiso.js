@@ -24,7 +24,7 @@ const transporter = nodemailer.createTransport({
 
 const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
-cron.schedule("0 9 * * *", async () => {
+cron.schedule("*/5 * * * *", async () => {
   console.log("🔁 Ejecutando recordatorio de permisos aprobados");
 
   const client = new MongoClient(MONGO_URI);
