@@ -25,8 +25,6 @@ const transporter = nodemailer.createTransport({
 const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
 cron.schedule("0 9 * * *", async () => {
-
-  // cron.schedule("*/3 * * * *", async () => {
   console.log("🔁 Ejecutando recordatorio de permisos aprobados");
 
   const client = new MongoClient(MONGO_URI);
@@ -77,7 +75,7 @@ cron.schedule("0 9 * * *", async () => {
         // Enviar recordatorio con QR de pago
         await transporter.sendMail({
           from: GMAIL_USER,
-          to: permiso.correo,
+          to: permiso.correoSolicitante,
           subject: "Pago pendiente - Último recordatorio",
           text: `Han pasado 3 días desde la aprobación de su permiso y aún no se ha registrado el pago. Por favor, realice el pago usando el QR adjunto o su solicitud será cancelada.`,
           attachments: [

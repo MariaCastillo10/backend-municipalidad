@@ -27,14 +27,12 @@ exports.crearPermiso = async (req, res) => {
 
     const horarioDate = new Date(horario);
 
-    // Obtener hora local y redondear al inicio de la hora
     const horarioLocal = new Date(horarioDate);
-    horarioLocal.setMinutes(0, 0, 0); // Redondear al inicio de la hora
+    horarioLocal.setMinutes(0, 0, 0);
 
     const siguienteHora = new Date(horarioLocal);
-    siguienteHora.setHours(siguienteHora.getHours() + 1); // Límite superior
+    siguienteHora.setHours(siguienteHora.getHours() + 1);
 
-    // Verificar si ya existe otro permiso en la misma hora (rango [hh:00, hh+1:00))
     const duplicado = await Permiso.findOne({
       lugar: Number(lugar),
       horario: {
