@@ -23,7 +23,6 @@ cron.schedule("0 9 * * *", async () => {
 
     const hoy = new Date();
 
-    // Filtrar deudas vencidas y no pagadas (estado 1 = pendiente)
     const vencidas = await deudas
       .find({
         estado: 1,
@@ -53,7 +52,18 @@ cron.schedule("0 9 * * *", async () => {
               filePath
             );
 
-            // 3. Guardar notificación interna
+            const totalNotificaciones = await NotificacionInterna.countDocuments({
+              ciudadanoDNI: deuda.dni,
+              modulo: "Rentas",
+            });
+
+            let prioridad = "Baja";
+            if (totalNotificaciones >= 5 && totalNotificaciones <= 8) {
+              prioridad = "Media";
+            } else if (totalNotificaciones >= 9) {
+              prioridad = "Alta";
+            }
+
             await NotificacionInterna.create({
               ciudadanoDNI: deuda.dni,
               nombres: deuda.nombres,
@@ -62,7 +72,7 @@ cron.schedule("0 9 * * *", async () => {
               modulo: "Rentas",
               mensaje,
               via: "correo",
-              prioridad: "Alta",
+                prioridad,
               areaDestino: "Tesorería",
               meta: {
                 idReferencia: deuda._id,

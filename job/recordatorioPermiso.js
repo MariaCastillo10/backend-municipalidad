@@ -69,6 +69,10 @@ cron.schedule("0 9 * * *", async () => {
                   ],
                 });
 
+                let prioridad = "Baja";
+                if (total >= 5 && total <= 8) prioridad = "Media";
+                else if (total >= 9) prioridad = "Alta";
+
                 await NotificacionInterna.create({
                   ciudadanoDNI: permiso.dni,
                   nombres: permiso.nombreSolicitante || "No especificado",
@@ -77,7 +81,7 @@ cron.schedule("0 9 * * *", async () => {
                   modulo: "Permisos",
                   mensaje: mensajeCorreo,
                   via: "correo",
-                  prioridad: "Media",
+                  prioridad,
                   areaDestino: "Eventos y Seguridad",
                   meta: {
                     idReferencia: permiso._id,
@@ -114,6 +118,15 @@ cron.schedule("0 9 * * *", async () => {
               ],
             });
 
+          const total = await NotificacionInterna.countDocuments({
+            ciudadanoDNI: permiso.dni,
+            modulo: "Permisos",
+          });
+
+          let prioridad = "Baja";
+          if (total >= 5 && total <= 8) prioridad = "Media";
+          else if (total >= 9) prioridad = "Alta";
+
             await NotificacionInterna.create({
               ciudadanoDNI: permiso.dni,
               nombres: permiso.nombreSolicitante || "No especificado",
@@ -122,7 +135,7 @@ cron.schedule("0 9 * * *", async () => {
               modulo: "Permisos",
               mensaje: mensajeCorreo,
               via: "correo",
-              prioridad: "Alta",
+              prioridad,
               areaDestino: "Eventos y Seguridad",
               meta: {
                 idReferencia: permiso._id,
@@ -144,7 +157,7 @@ cron.schedule("0 9 * * *", async () => {
               modulo: "Permisos",
               mensaje: mensajeWA,
               via: "whatsapp",
-              prioridad: "Alta",
+              prioridad,
               areaDestino: "Eventos y Seguridad",
               meta: {
                 idReferencia: permiso._id,
