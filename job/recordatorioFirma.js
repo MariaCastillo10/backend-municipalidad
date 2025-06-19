@@ -3,6 +3,10 @@ const cron = require("node-cron");
 const nodemailer = require("nodemailer");
 const { MongoClient } = require("mongodb");
 const twilio = require("twilio");
+const mongoose = require("mongoose");
+
+const NotificacionInterna = require("../models/NotificacionInterna");
+const Solicitud = require("../models/Solicitud"); 
 
 const {
   MONGO_URI,
@@ -24,10 +28,7 @@ const transporter = nodemailer.createTransport({
 const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
 cron.schedule("0 9 * * *", async () => {
-  // cron.schedule("* * * * *", async () => {
-  // QUE SE ENVIE CADA MINUTO
-  console.log("🔁 Ejecutando tarea programada de recordatorios de firma");
-
+// cron.schedule("*/2 * * * *", async () => {
   const client = new MongoClient(MONGO_URI);
   try {
     await client.connect();
@@ -45,21 +46,40 @@ cron.schedule("0 9 * * *", async () => {
         (hoy - fechaCreacion) / (1000 * 60 * 60 * 24)
       );
 
-      if (diasPasados < 5) {
+      // if (diasPasados < 5) {
         const correos = [
           solicitud.correoSolicitante,
           solicitud.correoConyuge,
         ].filter(Boolean);
+
         for (const correo of correos) {
+
+           const mensajeCorreo = `Estimado(a), le recordamos que debe acercarse a la municipalidad para firmar su trámite de divorcio.`;
+
           await transporter.sendMail({
             from: GMAIL_USER,
             to: correo,
             subject: "Municipalidad Porvenir - Recordatorio de firma",
-            text: `Estimado(a), le recordamos que debe acercarse a la municipalidad para firmar su trámite de divorcio.`,
+            text: mensajeCorreo
           });
-          console.log(`✉️ Correo enviado a: ${correo}`);
+          
+          await NotificacionInterna.create({
+            ciudadanoDNI: solicitud.dniSolicitante || "SIN_DNI",
+            nombres: solicitud.nombreSolicitante,
+            correo,
+            tipo: "Recordatorio de Firma",
+            modulo: "Divorcios",
+            mensaje: mensajeCorreo,
+            via: "correo",
+            prioridad: "Media",
+            areaDestino: "Área Legal",
+            meta: {
+              idReferencia: solicitud._id,
+              tipoReferencia: "Solicitud",
+            },
+          });
         }
-      }
+      // }
 
       if (diasPasados >= 5) {
         // if (true) {
@@ -68,12 +88,28 @@ cron.schedule("0 9 * * *", async () => {
           solicitud.celularConyuge,
         ].filter(Boolean);
         for (const celular of celulares) {
+           const mensajeWA = "⚠️ Recordatorio: Han pasado 5 días sin firmar el trámite de divorcio. Por favor, acérquese a la Municipalidad del Porvenir.";
           await twilioClient.messages.create({
             from: `whatsapp:${TWILIO_WHATSAPP_FROM}`,
             to: `whatsapp:+51${celular}`,
-            body: "⚠️ Recordatorio: Han pasado 5 días sin firmar el trámite de divorcio. Por favor, acérquese a la Municipalidad del Porvenir.",
+            body: mensajeWA
           });
-          console.log(`📱 WhatsApp enviado a: +51${celular}`);
+
+          await NotificacionInterna.create({
+            ciudadanoDNI: solicitud.dniSolicitante || "SIN_DNI",
+            nombres: solicitud.nombreSolicitante,
+            celular,
+            tipo: "Recordatorio de Firma (5 días)",
+            modulo: "Divorcios",
+            mensaje: mensajeWA,
+            via: "whatsapp",
+            prioridad: "Alta",
+            areaDestino: "Área Legal",
+            meta: {
+              idReferencia: solicitud._id,
+              tipoReferencia: "Solicitud",
+            },
+          });
         }
       }
     }

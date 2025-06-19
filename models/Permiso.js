@@ -12,6 +12,7 @@ const PermisoSchema = new mongoose.Schema(
     requiereAutorizacion: { type: Boolean, required: false },
     creadoEn: { type: Date, required: false },
     correo: { type: String, required: true },
+    nombreSolicitante: { type: String, required: false },
   },
   {
     timestamps: true,

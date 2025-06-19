@@ -32,6 +32,7 @@ const licenciaRoutes = require("./routes/licenciaRoutes");
 const notificacionRoutes = require("./routes/notificacionRoutes");
 const permisoRoutes = require("./routes/permisoRoutes");
 const deudaRoutes = require("./routes/deudaRoutes");
+const resumenInternaRoutes = require("./routes/resumenRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/exercises", exerciseRoutes);
@@ -40,6 +41,7 @@ app.use("/api/licencia", licenciaRoutes);
 app.use("/api/pendientes", notificacionRoutes);
 app.use("/api/permiso", permisoRoutes);
 app.use("/api/deuda", deudaRoutes);
+app.use("/api/resumen", resumenInternaRoutes);
 
 app.get("/", (req, res) => {
   res.send("API Municipalidad el Porvenir");
@@ -48,6 +50,7 @@ app.get("/", (req, res) => {
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 require("./job/recordatorioFirma");
 require("./job/recordatorioPermiso");
+require("./job/recordatorioRenta");
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);

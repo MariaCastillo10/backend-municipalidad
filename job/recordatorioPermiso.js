@@ -3,7 +3,9 @@ const cron = require("node-cron");
 const nodemailer = require("nodemailer");
 const { MongoClient } = require("mongodb");
 const twilio = require("twilio");
+const mongoose = require("mongoose");
 const generarPDFCompromiso = require("../utils/generarPDFCompromiso");
+const NotificacionInterna = require("../models/NotificacionInterna");
 
 const {
   MONGO_URI,
@@ -25,8 +27,7 @@ const transporter = nodemailer.createTransport({
 const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
 cron.schedule("0 9 * * *", async () => {
-  console.log("🔁 Ejecutando recordatorio de permisos aprobados");
-
+  // cron.schedule("*/2 * * * *", async () => {
   const client = new MongoClient(MONGO_URI);
   try {
     await client.connect();
@@ -36,65 +37,128 @@ cron.schedule("0 9 * * *", async () => {
     const hoy = new Date();
     const aprobados = await permisos.find({ estado: 2 }).toArray();
 
-    for (const permiso of aprobados) {
-      const fechaAprobado = new Date(permiso.creadoEn); // o permiso.fechaAprobado
-      const diasPasados = Math.floor(
-        (hoy - fechaAprobado) / (1000 * 60 * 60 * 24)
-      );
+    await Promise.all(
+      aprobados.map(async (permiso) => {
+        const fechaAprobado = new Date(permiso.creadoEn);
+        const diasPasados = Math.floor(
+          (hoy - fechaAprobado) / (1000 * 60 * 60 * 24)
+        );
 
-      //   if (diasPasados === 0) {
-      // Generar PDF dinámicamente
-      generarPDFCompromiso(permiso, async (err, filePath) => {
-        if (err) {
-          console.error("❌ Error generando PDF:", err);
-          return;
-        }
+        // 📄 Enviar PDF el mismo día (día 0)
+        // if (diasPasados === 0) {
+          await new Promise((resolve) => {
+            generarPDFCompromiso(permiso, async (err, filePath) => {
+              if (err) {
+                console.error("❌ Error generando PDF:", err);
+                return resolve();
+              }
 
-        try {
-          await transporter.sendMail({
-            from: GMAIL_USER,
-            to: permiso.correo,
-            subject: "Permiso aprobado - Documento de compromiso",
-            text: "Adjunto encontrará el documento de compromiso. Debe realizar el pago correspondiente en los próximos 3 días y adjuntarlo el comprobante en su solicitud en el sistema. Una  vez realizado se le volverá a enviar el documento firmado.",
-            attachments: [
-              {
-                filename: "compromiso.pdf",
-                path: filePath,
-              },
-            ],
+              const mensajeCorreo = `Adjunto encontrará el documento de compromiso. Debe realizar el pago correspondiente en los próximos 3 días y adjuntar el comprobante en su solicitud.`;
+
+              try {
+                await transporter.sendMail({
+                  from: GMAIL_USER,
+                  to: permiso.correo,
+                  subject: "Permiso aprobado - Documento de compromiso",
+                  text: mensajeCorreo,
+                  attachments: [
+                    {
+                      filename: "compromiso.pdf",
+                      path: filePath,
+                    },
+                  ],
+                });
+
+                await NotificacionInterna.create({
+                  ciudadanoDNI: permiso.dni,
+                  nombres: permiso.nombreSolicitante || "No especificado",
+                  correo: permiso.correo,
+                  tipo: "Permiso Aprobado",
+                  modulo: "Permisos",
+                  mensaje: mensajeCorreo,
+                  via: "correo",
+                  prioridad: "Media",
+                  areaDestino: "Eventos y Seguridad",
+                  meta: {
+                    idReferencia: permiso._id,
+                    tipoReferencia: "Permiso",
+                  },
+                });
+
+                console.log(`📩 PDF enviado a ${permiso.correo}`);
+              } catch (error) {
+                console.error("❌ Error enviando correo:", error);
+              }
+
+              resolve();
+            });
           });
+        // }
 
-          console.log(`📩 PDF enviado a ${permiso.correo}`);
-        } catch (error) {
-          console.error("❌ Error enviando correo:", error);
+        // 🔔 Recordatorio al día 3
+        if (diasPasados === 3) {
+          const mensajeCorreo = `Han pasado 3 días desde la aprobación de su permiso y aún no se ha registrado el pago. Por favor, realice el pago usando el QR adjunto o su solicitud será cancelada.`;
+          const mensajeWA = "⚠️ Último recordatorio: Su permiso aprobado aún no ha sido pagado. Realice el pago en las próximas 24h para evitar la cancelación.";
+
+          try {
+            await transporter.sendMail({
+              from: GMAIL_USER,
+              to: permiso.correo,
+              subject: "Pago pendiente - Último recordatorio",
+              text: mensajeCorreo,
+              attachments: [
+                {
+                  filename: "pagoQR.png",
+                  path: "./documentos/qr_pago.png",
+                },
+              ],
+            });
+
+            await NotificacionInterna.create({
+              ciudadanoDNI: permiso.dni,
+              nombres: permiso.nombreSolicitante || "No especificado",
+              correo: permiso.correo,
+              tipo: "Recordatorio de Pago",
+              modulo: "Permisos",
+              mensaje: mensajeCorreo,
+              via: "correo",
+              prioridad: "Alta",
+              areaDestino: "Eventos y Seguridad",
+              meta: {
+                idReferencia: permiso._id,
+                tipoReferencia: "Permiso",
+              },
+            });
+
+            await twilioClient.messages.create({
+              from: `whatsapp:${TWILIO_WHATSAPP_FROM}`,
+              to: `whatsapp:+51${permiso.celularSolicitante}`,
+              body: mensajeWA,
+            });
+
+            await NotificacionInterna.create({
+              ciudadanoDNI: permiso.dni,
+              nombres: permiso.nombreSolicitante || "No especificado",
+              celular: permiso.celularSolicitante,
+              tipo: "Recordatorio de Pago",
+              modulo: "Permisos",
+              mensaje: mensajeWA,
+              via: "whatsapp",
+              prioridad: "Alta",
+              areaDestino: "Eventos y Seguridad",
+              meta: {
+                idReferencia: permiso._id,
+                tipoReferencia: "Permiso",
+              },
+            });
+
+            console.log(`🚨 Recordatorio de pago enviado a ${permiso.correo}`);
+          } catch (error) {
+            console.error("❌ Error enviando recordatorio:", error);
+          }
         }
-      });
-      //   }
-
-      if (diasPasados === 3) {
-        // Enviar recordatorio con QR de pago
-        await transporter.sendMail({
-          from: GMAIL_USER,
-          to: permiso.correoSolicitante,
-          subject: "Pago pendiente - Último recordatorio",
-          text: `Han pasado 3 días desde la aprobación de su permiso y aún no se ha registrado el pago. Por favor, realice el pago usando el QR adjunto o su solicitud será cancelada.`,
-          attachments: [
-            {
-              filename: "pagoQR.png",
-              path: "./documentos/qr_pago.png",
-            },
-          ],
-        });
-
-        await twilioClient.messages.create({
-          from: `whatsapp:${TWILIO_WHATSAPP_FROM}`,
-          to: `whatsapp:+51${permiso.celularSolicitante}`, // asegúrate de guardar este campo
-          body: "⚠️ Último recordatorio: Su permiso aprobado aún no ha sido pagado. Realice el pago en las próximas 24h para evitar la cancelación.",
-        });
-
-        console.log(`🚨 Recordatorio de pago enviado a ${permiso.correo}`);
-      }
-    }
+      })
+    );
   } catch (err) {
     console.error("❌ Error en cron de permisos:", err);
   } finally {

@@ -23,7 +23,7 @@ function calcularCosto(tipo, aforo) {
 
 exports.crearPermiso = async (req, res) => {
   try {
-    const { tipo, fecha, lugar, horario, aforo, estado, correo } = req.body;
+    const { tipo, fecha, lugar, horario, aforo, estado, correo, nombreSolicitante } = req.body;
 
     const horarioDate = new Date(horario);
 
@@ -61,6 +61,7 @@ exports.crearPermiso = async (req, res) => {
       requiereAutorizacion,
       costo,
       creadoEn: new Date(),
+      nombreSolicitante
     });
 
     console.log("Nuevo permiso:", nuevoPermiso);
