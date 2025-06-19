@@ -11,8 +11,8 @@ const {
   GMAIL_USER,
 } = process.env;
 
-// cron.schedule("*/2 * * * *", async () => {
-cron.schedule("0 9 * * *", async () => {
+cron.schedule("*/5 * * * *", async () => {
+// cron.schedule("0 9 * * *", async () => {
   console.log("📬 Ejecutando job de envío de deudas vencidas");
 
   const client = new MongoClient(MONGO_URI);
