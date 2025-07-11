@@ -9,7 +9,7 @@ const options = {
       title: "API Municipalidad El Porvenir",
       version: "1.0.0",
       description:
-        "Documentación de la API para la aplicación educativa de POO con IA",
+        "Documentación de la API para la aplicación",
     },
     servers: [
       {
